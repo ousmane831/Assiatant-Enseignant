@@ -1,12 +1,16 @@
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
+
 
 # =========================================================
 # BASE
 # =========================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # =========================================================
@@ -20,10 +24,14 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get("DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "*",
-).split(",")
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "ALLOWED_HOSTS",
+        "127.0.0.1,localhost",
+    ).split(",")
+    if host.strip()
+]
 
 
 # =========================================================
@@ -93,13 +101,17 @@ TEMPLATES = [
 
 
 # =========================================================
-# DATABASE
+# DATABASE - POSTGRESQL
 # =========================================================
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
 
@@ -122,16 +134,17 @@ REST_FRAMEWORK = {
 # CORS
 # =========================================================
 
-# En développement, toutes les origines sont autorisées.
-# En production, utiliser CORS_ALLOWED_ORIGINS.
-
-CORS_ALLOW_ALL_ORIGINS = DEBUG
-
-# Exemple pour la production :
-#
-# CORS_ALLOWED_ORIGINS = [
-#     "https://ton-frontend.com",
-# ]
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip()
+        for origin in os.environ.get(
+            "CORS_ALLOWED_ORIGINS",
+            "",
+        ).split(",")
+        if origin.strip()
+    ]
 
 
 # =========================================================
